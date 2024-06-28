@@ -26,39 +26,85 @@ local function detect()
 	local res,msg = core.t55xx_detect()
 	if not res then
 		print('Card not detected!')
-		--oops("Can't detect modulation :((")
-		--core.console('rem [ERR:DETECT:WIPED] Failed to detect after wipe')
-		--maybe try with testing option
 		return false
 	else
 		return true
 	end
 end
 
-local function  main(args)
-	-- body
-	--vars
-	local blocks = {"00150060", "7fd44041", "05005545", "41000000", "7f843214"}
+local function read_blocks(file)
+	local blocks = {}
+	local line;
 
-	core.clearCommandBuffer();
+	for i = 0, 11 do
+		line = file:read("*l")
+		blocks[i] = line:match(':%s*"([^"]+)"')
+	end
+	return blocks
+end
+
+local function open_file(args)
+	local fp = 0
+	for o, arg in getopt.getopt(args, 'f:') do
+        if o == 'f' then fp = arg end
+    end
+    if fp == 0 then 
+    	print("No file given") 
+    	return 0
+    end
+	local file = io.open(fp, "r")
+	if not file then
+		print("El fichero no existe")
+		return 0
+	end
+	return file
+end
+
+local function read_file(args)
+	--Opens file by args
+	local file = open_file(args)
+	if (file == 0) then
+		return false
+	end
+
+	--Skips unneccessary lines
+	for i = 1, 7 do
+		file:read("*l")
+	end
+
+	--Checks if file is correct
+	if (file:read(7) ~= "    \"0\"") then
+		print("Invalid .json file")
+		return false
+	end
+
+	--Proceed to read blocks
+	local blocks = read_blocks(file)
+	file:close()
+	return blocks
+end
+
+local function  main(args)
+	local blocks = read_file(args)
+
+	core.clearCommandBuffer()
 
 	if not detect() then
-		return;
+		return
 	end
 
 	print('Wiping card')
 	core.console('lf t55xx wipe')
 
 	if not detect() then
-		return;
+		return
 	end
 
 	local command
-	for i = 1, 5
+	for i = 0, 11
 	do
-		command = string.format('lf t55xx write -b %d -d %s', (i-1), blocks[i])
+		command = string.format('lf t55xx write -b %d -d %s', (i), blocks[i])
 		core.console(command)
-		--core.console('lf t55xx write -b 0 -d %x', blocks[i])
 	end
 	print('Checking if data was written correctly...')
 	core.console('lf t55xx detect')
