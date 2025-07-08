@@ -86,7 +86,7 @@ end
 
 local function  main(args)
 	local blocks = read_file(args)
-	if not blocks() then
+	if not blocks then
 		print('Invalid file.\nUsage: run script t55xx_massWrite -f filename.json')
 		return
 	end
