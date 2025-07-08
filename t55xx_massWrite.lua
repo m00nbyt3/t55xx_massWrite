@@ -54,7 +54,7 @@ local function open_file(args)
     end
 	local file = io.open(fp, "r")
 	if not file then
-		print("El fichero no existe")
+		print("File not found")
 		return 0
 	end
 	return file
@@ -86,10 +86,15 @@ end
 
 local function  main(args)
 	local blocks = read_file(args)
+	if not blocks() then
+		print('Invalid file.\nUsage: run script t55xx_massWrite -f filename.json')
+		return
+	end
 
 	core.clearCommandBuffer()
 
 	if not detect() then
+		print('Couldnt detect t55xx card.')
 		return
 	end
 
@@ -108,6 +113,6 @@ local function  main(args)
 	end
 	print('Checking if data was written correctly...')
 	core.console('lf t55xx detect')
-	core.console('lf t55xx dump')
+	core.console('lf t55xx dump --ns')
 end
 main(args)
